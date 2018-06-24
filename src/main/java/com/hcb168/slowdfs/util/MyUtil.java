@@ -26,6 +26,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -55,6 +56,8 @@ public class MyUtil {
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 	private static final SecureRandom secureRandom = new SecureRandom();
 	private static final Random random = new Random();
+
+	private static int iSequence = 9999997;
 
 	public static Logger getLogger() {
 		return logger;
@@ -171,6 +174,22 @@ public class MyUtil {
 	}
 
 	/**
+	 * 根据JSON转换成对象
+	 * 
+	 * @param jsonStr
+	 * @param tClass
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public static <T> T getObjectByJson(String jsonStr, Class<T> tClass)
+			throws JsonParseException, JsonMappingException, IOException {
+		T obj = objectMapper.readValue(jsonStr, tClass);
+		return obj;
+	}
+
+	/**
 	 * 生成错误返回JSON串的快捷方法
 	 * 
 	 * @param msg
@@ -204,6 +223,7 @@ public class MyUtil {
 	 * @param jsonStr
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	public static Map getMapByJsonStr(String jsonStr) {
 		JsonParserFactory parserFac = JsonParserFactory.getInstance();
 		JSONParser parser = parserFac.newJsonParser();
@@ -217,6 +237,7 @@ public class MyUtil {
 	 * @param jsonData
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	public static String getJsonStrByMap(Map jsonData) {
 		JSONObject jsonObject = JSONObject.fromObject(jsonData);
 		return jsonObject.toString();
@@ -396,4 +417,41 @@ public class MyUtil {
 		}
 	}
 
+	/**
+	 * 提供一个进程本地的序列号
+	 * 
+	 * @return
+	 */
+	public static synchronized String getLocalSequence() {
+		String strSeq = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date()) + String.format("%07d", iSequence);
+		if (iSequence >= 9999999) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				MyUtil.logger.warn(e);
+			}
+			iSequence = 0;
+		} else {
+			iSequence++;
+		}
+		return strSeq;
+	}
+
+	/**
+	 * 随机化一个数组
+	 * 
+	 * @param array
+	 *            数组类型不能是基本类型，必须是类和基本类型的包装类
+	 * @return
+	 */
+	public static <T> T[] randomizeArray(T[] array) {
+		int len = array.length;
+		for (int i = 0; i < len; i++) {
+			int iR = secureRandom.nextInt(len);
+			T tmp = array[i];
+			array[i] = array[iR];
+			array[iR] = tmp;
+		}
+		return array;
+	}
 }

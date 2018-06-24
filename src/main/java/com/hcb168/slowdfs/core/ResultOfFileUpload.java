@@ -1,16 +1,26 @@
 package com.hcb168.slowdfs.core;
 
 public class ResultOfFileUpload {
+	private String groupId = "";// 文件所属组
 	private String originalFileName = "";// 原始文件名称
 	private String prefix = "";// 文件后缀
 	private long fileSize = 0;// 文件大小
 	private String fileMD5Value = "";// 文件内容的MD5
-	private String md5FileName = "";// MD5文件名
+	private String fileId = "";// 文件ID
 
 	private String downloadUrl = "";// 文件下载路径
-	private String storePath = "";// 文件存储路径
+	private String storePathFile = "";// 文件存储路径
+	private String dateTime = "";// 时间
 	private boolean uploadStatus = false;// 文件上传状态 true-成功、false-失败
 	private String msg = "";// 文件上传描述信息
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
+	}
 
 	public String getOriginalFileName() {
 		return originalFileName;
@@ -22,14 +32,6 @@ public class ResultOfFileUpload {
 
 	public void setFileMD5Value(String fileMD5Value) {
 		this.fileMD5Value = fileMD5Value;
-	}
-
-	public String getMd5FileName() {
-		return md5FileName;
-	}
-
-	public void setMd5FileName(String md5FileName) {
-		this.md5FileName = md5FileName;
 	}
 
 	public void setOriginalFileName(String originalFileName) {
@@ -52,6 +54,14 @@ public class ResultOfFileUpload {
 		this.prefix = prefix;
 	}
 
+	public String getFileId() {
+		return fileId;
+	}
+
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
+	}
+
 	public String getDownloadUrl() {
 		return downloadUrl;
 	}
@@ -60,12 +70,20 @@ public class ResultOfFileUpload {
 		this.downloadUrl = downloadUrl;
 	}
 
-	public String getStorePath() {
-		return storePath;
+	public String getStorePathFile() {
+		return storePathFile;
 	}
 
-	public void setStorePath(String storePath) {
-		this.storePath = storePath;
+	public void setStorePathFile(String storePath) {
+		this.storePathFile = storePath;
+	}
+
+	public String getDateTime() {
+		return dateTime;
+	}
+
+	public void setDateTime(String dateTime) {
+		this.dateTime = dateTime;
 	}
 
 	public boolean isUploadStatus() {

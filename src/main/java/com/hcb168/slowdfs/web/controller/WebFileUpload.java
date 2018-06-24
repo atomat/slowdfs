@@ -1,7 +1,9 @@
 package com.hcb168.slowdfs.web.controller;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +11,11 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.fileupload.servlet.ServletRequestContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hcb168.slowdfs.core.ResultOfFileUpload;
+import com.hcb168.slowdfs.dao.Notice;
+import com.hcb168.slowdfs.dao.SlowFile;
 import com.hcb168.slowdfs.util.MyFileUtil;
 import com.hcb168.slowdfs.util.MyUtil;
 import com.hcb168.slowdfs.util.SysParams;
@@ -26,11 +32,14 @@ import com.hcb168.slowdfs.util.SysParams;
 @Controller
 public class WebFileUpload {
 	@ResponseBody
-	@RequestMapping(value = "/upload", method = RequestMethod.POST, produces = "text/html;charset=UTF-8")
-	public String uploadFiles(HttpServletRequest request, @RequestParam("files") MultipartFile[] files)
-			throws Exception {
+	@RequestMapping(value = "/upload/{groupId:.+}", method = RequestMethod.POST, produces = "text/html;charset=UTF-8")
+	public String uploadFilesByGroupId(HttpServletRequest request, @PathVariable("groupId") String groupId,
+			@RequestParam("files") MultipartFile[] files) throws Exception {
+		if (StringUtils.isEmpty(groupId)) {
+			return MyUtil.getReturnErr("/upload/{groupId}，groupid不能为空");
+		}
 		if (files == null || files.length <= 0) {
-			return MyUtil.getReturnErr("提交的文件清单为空");
+			return MyUtil.getReturnErr("提交的文件清单为空。文件控件input type='file' name='files'中，name必须为files");
 		}
 
 		ServletRequestContext ctx = new ServletRequestContext(request);
@@ -44,7 +53,7 @@ public class WebFileUpload {
 		List<ResultOfFileUpload> list = new ArrayList<ResultOfFileUpload>();
 		for (int i = 0; i < files.length; i++) {
 			MultipartFile file = files[i];
-			ResultOfFileUpload result = storeFile(file);
+			ResultOfFileUpload result = storeFile(groupId, file);
 			list.add(result);
 		}
 
@@ -54,10 +63,18 @@ public class WebFileUpload {
 		return MyUtil.getJsonString(resultMap);
 	}
 
-	private ResultOfFileUpload storeFile(MultipartFile file) throws Exception {
-		ResultOfFileUpload result = new ResultOfFileUpload();
+	@ResponseBody
+	@RequestMapping(value = "/upload", method = RequestMethod.POST, produces = "text/html;charset=UTF-8")
+	public String uploadFiles(HttpServletRequest request, @RequestParam("files") MultipartFile[] files)
+			throws Exception {
+		return uploadFilesByGroupId(request, "default", files);
+	}
 
-		if (!file.isEmpty()) {
+	private ResultOfFileUpload storeFile(String groupId, MultipartFile file) throws Exception {
+		ResultOfFileUpload result = new ResultOfFileUpload();
+		result.setGroupId(groupId);
+
+		if (file != null && !StringUtils.isEmpty(file.getOriginalFilename())) {
 			String originalFileName = file.getOriginalFilename();
 			MyUtil.getLogger().debug("收到文件:" + originalFileName + "，大小：" + file.getSize());
 
@@ -112,18 +129,48 @@ public class WebFileUpload {
 				// 获取文件MD5
 				String fileMD5Value = MyFileUtil.getFileMD5Value(path, newFileName);
 
-				String md5FileName = renameToMD5(path, newFileName, prefix, fileMD5Value);
+				String md5FileName = "";
+				if (StringUtils.isEmpty(prefix)) {
+					md5FileName = fileMD5Value;
+				} else {
+					md5FileName = fileMD5Value + "." + prefix;
+				}
+
+				String fileId = DigestUtils.md5Hex(fileMD5Value + "@" + groupId);
+
+				// 检查本机是否存在
+				ResultOfFileUpload resultOfFileUpload = SlowFile.getInstance().getResultOfFileUpload(fileId);
+				if (resultOfFileUpload != null) {
+					// 本机已存在该文件，删除临时目录下该文件
+					MyUtil.getLogger().debug("本机已存在文件：" + fileId);
+					new File(newFilePath).delete();
+					Notice.addFile(resultOfFileUpload);
+					return resultOfFileUpload;
+				}
+
+				// 将文件移动到存储目录
+				String storePathFile = MyFileUtil.moveToStorePath(newFilePath, fileMD5Value, md5FileName);
 
 				result.setOriginalFileName(originalFileName);
 				result.setPrefix(prefix);
 				result.setFileSize(file.getSize());
 				result.setFileMD5Value(fileMD5Value);
-				result.setMd5FileName(md5FileName);
-				result.setDownloadUrl("");
-				result.setStorePath("");
-				result.setUploadStatus(true);
-				result.setMsg("上传文件成功");
+				result.setFileId(fileId);
 
+				if (StringUtils.isEmpty(prefix)) {
+					result.setDownloadUrl("/download/" + groupId + "/" + fileId);
+				} else {
+					result.setDownloadUrl("/download/" + groupId + "/" + fileId + "." + prefix);
+				}
+
+				result.setStorePathFile(storePathFile);
+				result.setDateTime(new SimpleDateFormat("yyyyMMdd HH:mm:ss.SSS Z").format(new Date()));
+				result.setUploadStatus(true);
+				result.setMsg("");
+				SlowFile.getInstance().putResultOfFileUpload(result);
+				Notice.addFile(result);
+
+				MyUtil.getLogger().debug("成功接收文件：" + originalFileName);
 				return result;
 			} catch (Exception e) {
 				MyUtil.getLogger().error(e, e);
@@ -137,33 +184,6 @@ public class WebFileUpload {
 			result.setUploadStatus(false);
 			result.setMsg("文件对象为空");
 			return result;
-		}
-	}
-
-	private String renameToMD5(String srcPath, String srcFileName, String prefix, String fileMD5Value)
-			throws Exception {
-		String srcPathFile = srcPath + File.separator + srcFileName;
-
-		try {
-			String md5PathFile = "";
-			if (StringUtils.isEmpty(prefix)) {
-				md5PathFile = srcPath + File.separator + fileMD5Value;
-			} else {
-				md5PathFile = srcPath + File.separator + fileMD5Value + "." + prefix;
-			}
-
-			File fileMD5 = new File(md5PathFile);
-			if (fileMD5.exists()) {
-				// 如果已存在则删除源文件
-				new File(srcPathFile).delete();
-			} else {
-				new File(srcPathFile).renameTo(fileMD5);
-			}
-			return fileMD5.getName();
-
-		} catch (Exception e) {
-			MyUtil.getLogger().error(e, e);
-			throw new Exception("文件上传处理异常(md5)");
 		}
 	}
 }

@@ -20,7 +20,7 @@ public class SysParams {
 		return sysParamMap.get(key);
 	}
 
-	public void setSysParam(String key, String value) {
+	public void putSysParam(String key, String value) {
 		this.sysParamMap.put(key, value);
 	}
 

@@ -9,11 +9,6 @@
 		<welcome-file>index.htm</welcome-file>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
-	<context-param>
-		<param-name>contextConfigLocation</param-name>
-		<!-- 应用上下文配置文件 -->
-		<param-value>/WEB-INF/spring-servlet.xml</param-value>
-	</context-param>
 
 	<!-- 以下3项参数与log4j的配置相关 -->
 	<context-param>
@@ -29,20 +24,26 @@
 	</listener>
 	<!-- end -->
 
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/applicationContext.xml</param-value>
+	</context-param>
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
+
 	<!-- 执行应用的启动类 -->
 	<listener>
 		<listener-class>com.hcb168.slowdfs.web.util.StartupListener</listener-class>
 	</listener>
+
 	<!-- 配置spring核心servlet -->
 	<servlet>
 		<servlet-name>spring</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<init-param>
 			<param-name>contextConfigLocation</param-name>
-			<param-value></param-value>
+			<param-value>/WEB-INF/spring-servlet.xml</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
@@ -54,4 +55,22 @@
 	<session-config>
 		<session-timeout>900</session-timeout>
 	</session-config>
+
+	<error-page>
+		<error-code>400</error-code>
+		<location>/html/error.html</location>
+	</error-page>
+	<error-page>
+		<error-code>404</error-code>
+		<location>/html/404.html</location>
+	</error-page>
+	<error-page>
+		<error-code>405</error-code>
+		<location>/html/405.html</location>
+	</error-page>
+	<error-page>
+		<exception-type>java.lang.Exception</exception-type>
+		<location>/html/error.html</location>
+	</error-page>
+
 </web-app>

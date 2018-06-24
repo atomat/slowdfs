@@ -76,7 +76,25 @@ public class MyFileUtil {
 	}
 
 	/**
+	 * 获取文件名，无后缀
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public static String getFileNameNoPrefix(String fileName) {
+		String fileNameNoPrefix = "";
+		int prefixIndex = fileName.lastIndexOf(".");
+		if (prefixIndex >= 0) {
+			fileNameNoPrefix = fileName.substring(0, prefixIndex);
+		} else {
+			fileNameNoPrefix = fileName;
+		}
+		return fileNameNoPrefix;
+	}
+
+	/**
 	 * 获取文件内容的MD5
+	 * 
 	 * @param srcPath
 	 * @param srcFileName
 	 * @return
@@ -106,5 +124,36 @@ public class MyFileUtil {
 				fis = null;
 			}
 		}
+	}
+
+	/**
+	 * 移动文件到指定目录
+	 * 
+	 * @param srcPathFile
+	 * @param fileMD5Value
+	 * @param fileName
+	 * @return
+	 */
+	public static String moveToStorePath(String srcPathFile, String fileMD5Value, String fileName) {
+		String storeRootPath = SysParams.getInstance().getSysParam("file.store.path");
+
+		String storeSubPath = "/" + fileMD5Value.substring(0, 1) + "/" + fileMD5Value.substring(2, 4);
+
+		String storePath = storeRootPath + storeSubPath;
+
+		File storeDir = new File(storePath);
+		if (!storeDir.exists()) {
+			storeDir.mkdirs();
+		}
+
+		String storePathFile = MyFileUtil.formatPath(storePath + "/" + fileName);
+		File storeFile = new File(storePathFile);
+		if (storeFile.exists()) {
+			new File(srcPathFile).delete();
+		} else {
+			new File(srcPathFile).renameTo(storeFile);
+		}
+
+		return storeSubPath + "/" + fileName;
 	}
 }
