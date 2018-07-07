@@ -13,9 +13,14 @@
 * 尽量让slowdfs持有文件，因此没有设计保证节点间文件删除一致性的机制。
 
 ## 目录&特殊文件说明
-* webapp/files 文件存储路径
-* webapp/html 文件singlefile.html、multifile.html用浏览器上传文件的例子
-* webapp/tmpfiles 文件上传时，临时存放文件的目录
+* webapp/files 文件存储路径。
+* webapp/html 文件singlefile.html、multifile.html用浏览器上传文件的例子。
+* webapp/tmpfiles 文件上传时，临时存放文件的目录。
 * webapp/WEB-INF/logs 日志目录。*my.log*是通用日志输出文件，*health.log*是集群各个节点健康检查的日志。
 * webapp/WEB-INF/conf 配置文件目录。*slowdfs.xml*是系统运行参数配置文件，通常**不用修改**。*slowdfshost.xml*是集群中所有节点（包括本节点自身）的配置，请根据实际情况修改。
+
+## 使用说明
+1. Maven build；
+2. 将target目录下slowdfs目录复制到Tomcat的webapps目录下；
+3. 修改slowdfshost.xml文件，设置slowdfs的所有节点。
 
