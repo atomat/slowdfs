@@ -39,12 +39,12 @@
 	</appender>
 
 	<logger name="LOGFILE" additivity="false">
-		<level value="DEBUG" />
+		<level value="INFO" />
 		<appender-ref ref="ASYNC" />
 	</logger>
 
 	<logger name="HEALTH" additivity="false">
-		<level value="DEBUG" />
+		<level value="INFO" />
 		<appender-ref ref="ASYNC_HEALTH" />
 	</logger>
 
