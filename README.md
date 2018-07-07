@@ -1,5 +1,5 @@
 # slowdfs
-一个Java版的分布式文件服务，可运行在Tomcat等Web应用服务器中
+一个Java版的分布式文件服务，可运行在Tomcat等Web应用服务器中。
 
 ## 目标
 支持集群部署。
