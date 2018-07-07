@@ -1,14 +1,19 @@
 package com.hcb168.slowdfs.web.util;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.hcb168.slowdfs.config.ConfigHandle;
 import com.hcb168.slowdfs.config.SlowDFSConfig;
 import com.hcb168.slowdfs.core.FileWorker;
+import com.hcb168.slowdfs.core.FileWorkerReserve;
+import com.hcb168.slowdfs.core.HealthCheck;
 import com.hcb168.slowdfs.db.JdbcHelper;
 import com.hcb168.slowdfs.util.MyFileUtil;
 import com.hcb168.slowdfs.util.MyUtil;
@@ -36,6 +41,10 @@ public class StartupListener implements ServletContextListener {
 			SysParams.getInstance().putSysParam("conf.path", MyFileUtil.formatPath(webInfPath + "/conf"));
 			SysParams.getInstance().putSysParam("file.store.path", MyFileUtil.formatPath(appPath + "/files"));
 
+			String ContextPath = event.getServletContext().getContextPath();
+			MyUtil.getLogger().debug("web.context.path=" + ContextPath);
+			SysParams.getInstance().putSysParam("web.context.path", ContextPath);
+
 			// 添加库文件目录
 			String javaLibPath = System.getProperty("java.library.path");
 			if (MyUtil.isOSWindows()) {
@@ -62,9 +71,18 @@ public class StartupListener implements ServletContextListener {
 			} else {
 				MyUtil.getLogger().debug("数据库已初始化");
 			}
-			
+
 			// 启动文件同步线程
 			new FileWorker().start();
+			new FileWorkerReserve().start();
+
+			new HealthCheck().start();
+
+			// 初始化发送通知的线程池
+			ThreadPoolTaskExecutor noticeThreadPool = (ThreadPoolTaskExecutor) SpringUtil.getApplicationContext()
+					.getBean("noticeThreadPool");
+			ThreadPoolExecutor exec = noticeThreadPool.getThreadPoolExecutor();
+			exec.prestartAllCoreThreads();
 
 			MyUtil.getLogger().info("startup init end");
 		} catch (Exception e) {

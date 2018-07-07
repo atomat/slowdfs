@@ -22,8 +22,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hcb168.slowdfs.config.ConfigHandle;
+import com.hcb168.slowdfs.core.Notice;
 import com.hcb168.slowdfs.core.ResultOfFileUpload;
-import com.hcb168.slowdfs.dao.Notice;
 import com.hcb168.slowdfs.dao.SlowFile;
 import com.hcb168.slowdfs.util.MyFileUtil;
 import com.hcb168.slowdfs.util.MyUtil;
@@ -93,8 +94,11 @@ public class WebFileUpload {
 			// 获取后缀
 			String prefix = MyFileUtil.getFileNamePrefix(originalFileName);
 
-			String pf = "JSP";// 基于安全考虑：禁止上传jsp文件
-			if (!StringUtils.isEmpty(prefix) && pf.equals(prefix.toUpperCase()) == true) {
+			String pf = ConfigHandle.getInstance().getSlowDFSConfig().getUnallowedPrefix();
+			if (null == pf) {
+				pf = "";
+			}
+			if (!StringUtils.isEmpty(prefix) && pf.toUpperCase().indexOf("." + prefix.toUpperCase()) >= 0) {
 				result.setOriginalFileName(originalFileName);
 				result.setUploadStatus(false);
 				result.setMsg("不支持的文件类型：" + pf);
@@ -158,8 +162,10 @@ public class WebFileUpload {
 				result.setFileId(fileId);
 
 				if (StringUtils.isEmpty(prefix)) {
+					result.setFileName(fileId);
 					result.setDownloadUrl("/download/" + groupId + "/" + fileId);
 				} else {
+					result.setFileName(fileId + "." + prefix);
 					result.setDownloadUrl("/download/" + groupId + "/" + fileId + "." + prefix);
 				}
 

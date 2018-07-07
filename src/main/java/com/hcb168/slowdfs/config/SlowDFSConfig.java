@@ -1,10 +1,9 @@
 package com.hcb168.slowdfs.config;
 
 public class SlowDFSConfig {
-	private long maxUploadSize = 0;// 上传数据的最大值
-	private long maxFileSize = 0;// 上传单个文件大小的最大值
-	private String noticeHostUrl = "";// 通知服务的主url
-	private String downloadUrl = "";// 下载服务url
+	private volatile long maxUploadSize = 0;// 上传数据的最大值
+	private volatile long maxFileSize = 0;// 上传单个文件大小的最大值
+	private volatile String unallowedPrefix = "";// 不允许的文件类型
 
 	public long getMaxUploadSize() {
 		return maxUploadSize;
@@ -22,20 +21,12 @@ public class SlowDFSConfig {
 		this.maxFileSize = maxFileSize;
 	}
 
-	public String getNoticeHostUrl() {
-		return noticeHostUrl;
+	public String getUnallowedPrefix() {
+		return unallowedPrefix;
 	}
 
-	public void setNoticeHostUrl(String noticeHostUrl) {
-		this.noticeHostUrl = noticeHostUrl;
-	}
-
-	public String getDownloadUrl() {
-		return downloadUrl;
-	}
-
-	public void setDownloadUrl(String downloadUrl) {
-		this.downloadUrl = downloadUrl;
+	public void setUnallowedPrefix(String unallowedPrefix) {
+		this.unallowedPrefix = unallowedPrefix;
 	}
 
 }

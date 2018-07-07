@@ -30,14 +30,9 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.codesnippets4all.json.parsers.JSONParser;
-import com.codesnippets4all.json.parsers.JsonParserFactory;
-
-import net.sf.json.JSONObject;
-
 /**
  * 
- * @author yangli
+ * @author atomat
  * 
  */
 public class MyUtil {
@@ -57,7 +52,7 @@ public class MyUtil {
 	private static final SecureRandom secureRandom = new SecureRandom();
 	private static final Random random = new Random();
 
-	private static int iSequence = 9999997;
+	private static int iSequence = 0;
 
 	public static Logger getLogger() {
 		return logger;
@@ -222,25 +217,16 @@ public class MyUtil {
 	 * 
 	 * @param jsonStr
 	 * @return
+	 * @throws IOException
+	 * @throws JsonMappingException
+	 * @throws JsonParseException
 	 */
-	@SuppressWarnings("rawtypes")
-	public static Map getMapByJsonStr(String jsonStr) {
-		JsonParserFactory parserFac = JsonParserFactory.getInstance();
-		JSONParser parser = parserFac.newJsonParser();
-		Map jsonData = parser.parseJson(jsonStr);
-		return jsonData;
-	}
-
-	/**
-	 * 转换Map为json串
-	 * 
-	 * @param jsonData
-	 * @return
-	 */
-	@SuppressWarnings("rawtypes")
-	public static String getJsonStrByMap(Map jsonData) {
-		JSONObject jsonObject = JSONObject.fromObject(jsonData);
-		return jsonObject.toString();
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> getMapByJsonStr(String jsonStr)
+			throws JsonParseException, JsonMappingException, IOException {
+		Map<K, V> map = new HashMap<K, V>();
+		map = getObjectByJson(jsonStr, map.getClass());
+		return map;
 	}
 
 	/**

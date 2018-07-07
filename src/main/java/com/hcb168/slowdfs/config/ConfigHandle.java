@@ -2,6 +2,9 @@ package com.hcb168.slowdfs.config;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import com.hcb168.slowdfs.util.MyUtil;
 import com.hcb168.slowdfs.util.SysParams;
@@ -14,6 +17,8 @@ public class ConfigHandle {
 	private final SlowDFSConfig slowDFSConfig;
 
 	private final HostConfig hostConfig;
+	private final List<String> listHost;
+	private volatile List<String> listActiveHost;
 
 	private ConfigHandle() {
 		// 载入Config配置
@@ -69,6 +74,9 @@ public class ConfigHandle {
 				}
 			}
 			this.hostConfig = hostConfig;
+			List<String> listHostTmp = Arrays.asList(this.hostConfig.getHostList());
+			this.listHost = Collections.unmodifiableList(listHostTmp);
+			this.listActiveHost = this.listHost;
 		}
 
 	}
@@ -81,8 +89,20 @@ public class ConfigHandle {
 		return this.slowDFSConfig;
 	}
 
-	public HostConfig getHostConfig() {
-		return this.hostConfig;
+	public String[] getHosts() {
+		String[] hosts = new String[this.listHost.size()];
+		this.listHost.toArray(hosts);
+		return hosts;
+	}
+
+	public String[] getActiveHosts() {
+		String[] activeHosts = new String[this.listActiveHost.size()];
+		this.listActiveHost.toArray(activeHosts);
+		return activeHosts;
+	}
+
+	public void setActiveHosts(List<String> listActiveHost) {
+		this.listActiveHost = Collections.unmodifiableList(listActiveHost);
 	}
 
 	public static void main(String[] args) {

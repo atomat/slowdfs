@@ -69,13 +69,19 @@ public class JdbcHelper {
 	public static void initDB() {
 		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
 		// 创建文件信息表
-		jdbcTemplate.execute("create table file_info (file_id varchar(32), info varchar(2048))");
+		jdbcTemplate.execute("create table file_info (file_id varchar(32), file_md5 varchar(32), info varchar(2048))");
 		jdbcTemplate.execute("create unique index idx_file_info_id on file_info(file_id)");
+		jdbcTemplate.execute("create index idx_file_info_md5 on file_info(file_md5)");
 
 		// 创建文件变化通知消息表
 		jdbcTemplate.execute(
 				"create table notice_queue (seqid varchar(32), oper_type varchar(16), file_info varchar(2048), err_num INTEGER)");
 		jdbcTemplate.execute("create unique index idx_notice_queue_seqid on notice_queue(seqid)");
+
+		// 创建文件变化通知消息错误次数过多的延迟处理表
+		jdbcTemplate.execute(
+				"create table notice_queueres (seqid varchar(32), oper_type varchar(16), file_info varchar(2048), err_num INTEGER)");
+		jdbcTemplate.execute("create unique index idx_notice_queueres_seqid on notice_queueres(seqid)");
 	}
 
 	/**
@@ -87,9 +93,22 @@ public class JdbcHelper {
 	public static void putFileInfo(ResultOfFileUpload resultOfFileUpload) throws Exception {
 		String info = MyUtil.getJsonString(resultOfFileUpload);
 		String fileId = resultOfFileUpload.getFileId();
+		String fileMd5Value = resultOfFileUpload.getFileMD5Value();
 		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
-		jdbcTemplate.update("insert into file_info(file_id,info) values(?,?)", new Object[] { fileId, info });
+		jdbcTemplate.update("insert into file_info(file_id,file_md5,info) values(?,?,?)",
+				new Object[] { fileId, fileMd5Value, info });
 		MyUtil.getLogger().debug("存储文件信息：" + info);
+	}
+
+	/**
+	 * 删除文件信息
+	 * 
+	 * @param fileId
+	 */
+	public static void removeFileInfo(String fileId) {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		jdbcTemplate.update("delete from FILE_INFO where FILE_ID=?", new Object[] { fileId });
+		MyUtil.getLogger().debug("删除文件信息：" + fileId);
 	}
 
 	/**
@@ -113,6 +132,20 @@ public class JdbcHelper {
 	}
 
 	/**
+	 * 获取文件信息表中该MD5码的记录数
+	 * 
+	 * @param fileMD5Value
+	 * @return
+	 * @throws Exception
+	 */
+	public static int countFileInfo(String fileMD5Value) throws Exception {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		int iCount = jdbcTemplate.queryForObject("select count(*) from file_info where file_md5=?", Integer.class,
+				fileMD5Value);
+		return iCount;
+	}
+
+	/**
 	 * 收到新增文件的通知
 	 * 
 	 * @param jsonFileInfo
@@ -123,6 +156,20 @@ public class JdbcHelper {
 		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
 		jdbcTemplate.update("insert into notice_queue values(?,?,?,0)",
 				new Object[] { seqId, "addfile", jsonFileInfo });
+
+	}
+
+	/**
+	 * 收到删除文件的通知
+	 * 
+	 * @param jsonFileInfo
+	 */
+	public static void putNoticeDelete(String jsonFileInfo) {
+		MyUtil.getLogger().debug("收到删除文件通知：" + jsonFileInfo);
+		String seqId = MyUtil.getLocalSequence();
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		jdbcTemplate.update("insert into notice_queue values(?,?,?,0)",
+				new Object[] { seqId, "deletefile", jsonFileInfo });
 
 	}
 
@@ -158,5 +205,54 @@ public class JdbcHelper {
 		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
 		jdbcTemplate.update("update NOTICE_QUEUE set err_num=err_num+1 where SEQID=?", new Object[] { seqId });
 		MyUtil.getLogger().debug("通知表消息：" + seqId + "增加错误次数");
+	}
+
+	/**
+	 * 将错误次数过多的通知信息移到延迟处理表
+	 * 
+	 * @param seqId
+	 */
+	public static void moveNoticeToReserve(String seqId) {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		jdbcTemplate.update(
+				"insert into notice_queueres select seqid,oper_type,file_info,err_num FROM NOTICE_QUEUE where seqid=?",
+				new Object[] { seqId });
+
+		delNotice(seqId);
+		MyUtil.getLogger().debug("移动消息到延迟处理表：" + seqId);
+	}
+
+	/**
+	 * 延迟处理消息表
+	 * 
+	 * @return
+	 */
+	public static List<Map<String, Object>> getNoticeReserve() {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		List<Map<String, Object>> result = jdbcTemplate.queryForList(
+				"SELECT seqid,oper_type,file_info,err_num FROM NOTICE_QUEUERES order by SEQID asc OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY");
+		return result;
+	}
+
+	/**
+	 * 删除消息延迟处理表中记录
+	 * 
+	 * @param seqId
+	 */
+	public static void delNoticeReserve(String seqId) {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		jdbcTemplate.update("delete from NOTICE_QUEUERES where seqid=?", new Object[] { seqId });
+		MyUtil.getLogger().debug("删除通知延迟处理表消息：" + seqId);
+	}
+
+	/**
+	 * 增加文件变化通知消息延迟处理表指定记录的错误次数
+	 * 
+	 * @param seqId
+	 */
+	public static void increaseNoticeReserveErrNum(String seqId) {
+		JdbcTemplate jdbcTemplate = SpringUtil.getJdbcTemplate();
+		jdbcTemplate.update("update NOTICE_QUEUERES set err_num=err_num+1 where SEQID=?", new Object[] { seqId });
+		MyUtil.getLogger().debug("通知延迟处理表消息：" + seqId + "增加错误次数");
 	}
 }

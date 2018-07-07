@@ -7,6 +7,7 @@ public class ResultOfFileUpload {
 	private long fileSize = 0;// 文件大小
 	private String fileMD5Value = "";// 文件内容的MD5
 	private String fileId = "";// 文件ID
+	private String fileName = "";// slowdfs文件名
 
 	private String downloadUrl = "";// 文件下载路径
 	private String storePathFile = "";// 文件存储路径
@@ -60,6 +61,14 @@ public class ResultOfFileUpload {
 
 	public void setFileId(String fileId) {
 		this.fileId = fileId;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 
 	public String getDownloadUrl() {

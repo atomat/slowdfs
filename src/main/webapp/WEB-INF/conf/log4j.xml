@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE log4j:configuration SYSTEM "http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
 
-<log4j:configuration
-	xmlns:log4j="http://jakarta.apache.org/log4j/">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
 	<appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
 		<param name="BufferSize" value="8192" />
@@ -10,27 +9,43 @@
 		<appender-ref ref="STDOUT" />
 	</appender>
 
-	<appender name="STDOUT"
-		class="org.apache.log4j.ConsoleAppender">
+	<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern"
-				value="[%p][%d{yyyyMMdd HH:mm:ss,SSS}] %m%n" />
+			<param name="ConversionPattern" value="[%p][%d{yyyyMMdd HH:mm:ss,SSS}] %m%n" />
 		</layout>
 	</appender>
 
-	<appender name="LOGFILE"
-		class="org.apache.log4j.DailyRollingFileAppender">
+	<appender name="ASYNC_HEALTH" class="org.apache.log4j.AsyncAppender">
+		<param name="BufferSize" value="8192" />
+		<appender-ref ref="HEALTH" />
+	</appender>
+
+	<appender name="LOGFILE" class="org.apache.log4j.DailyRollingFileAppender">
 		<param name="File" value="${webapp.root}/WEB-INF/logs/my.log" />
 		<param name="DatePattern" value="'.'yyyy-MM-dd" />
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern"
-				value="%p|%d{yyyyMMdd HH:mm:ss,SSS}|%m%n" />
+			<param name="ConversionPattern" value="%p|%d{yyyyMMdd HH:mm:ss,SSS}|%m%n" />
+		</layout>
+	</appender>
+
+	<appender name="HEALTH" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${webapp.root}/WEB-INF/logs/health.log" />
+		<param name="Append" value="true" />
+		<param name="MaxBackupIndex" value="10" />
+		<param name="MaxFileSize" value="10MB" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%p|%d{yyyyMMdd HH:mm:ss,SSS}|%m%n" />
 		</layout>
 	</appender>
 
 	<logger name="LOGFILE" additivity="false">
 		<level value="DEBUG" />
 		<appender-ref ref="ASYNC" />
+	</logger>
+
+	<logger name="HEALTH" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="ASYNC_HEALTH" />
 	</logger>
 
 	<root>

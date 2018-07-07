@@ -5,7 +5,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.hcb168.slowdfs.core.ResultOfFileUpload;
 import com.hcb168.slowdfs.db.JdbcHelper;
-import com.hcb168.slowdfs.util.MyUtil;
 
 public class SlowFile {
 	private static final SlowFile instance = new SlowFile();
@@ -26,6 +25,19 @@ public class SlowFile {
 
 	public ResultOfFileUpload getResultOfFileUpload(String fileId) throws Exception {
 		return JdbcHelper.getFileInfo(fileId);
+	}
+
+	public void removeResultOfFileUpload(String fileId) throws Exception {
+		JdbcHelper.removeFileInfo(fileId);
+	}
+
+	public boolean existsFileMD5(String fileMD5Value) throws Exception {
+		int iCount = JdbcHelper.countFileInfo(fileMD5Value);
+		if (iCount > 0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }

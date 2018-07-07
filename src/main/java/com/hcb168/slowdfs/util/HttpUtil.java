@@ -23,8 +23,8 @@ public class HttpUtil {
 		CloseableHttpResponse response = null;
 		try {
 			HttpGet httpGet = new HttpGet(hostUrl); // 使用Get方法提交
-			RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(500).setSocketTimeout(500)
-					.setConnectionRequestTimeout(500).build();
+			RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(300).setSocketTimeout(1000)
+					.setConnectionRequestTimeout(300).build();
 			httpGet.setConfig(requestConfig);
 
 			response = httpClient.execute(httpGet);

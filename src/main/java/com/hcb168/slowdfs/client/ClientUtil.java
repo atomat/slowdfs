@@ -2,6 +2,8 @@ package com.hcb168.slowdfs.client;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -19,6 +21,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.CharsetUtils;
 import org.apache.http.util.EntityUtils;
 
+import com.hcb168.slowdfs.util.MyUtil;
+
 public class ClientUtil {
 	/**
 	 * 文件上传
@@ -30,7 +34,7 @@ public class ClientUtil {
 	 * @param groupId
 	 *            文件所属组
 	 * @param srcPathFile
-	 *            待上传文件所在的路径
+	 *            待上传文件所在的路径(带文件名的全路径)
 	 * @param fileName
 	 *            文件名称
 	 * @param iConnectTimeout
@@ -79,14 +83,84 @@ public class ClientUtil {
 		return result;
 	}
 
+	/**
+	 * 
+	 * @param slowdfsHost
+	 *            slowdfs主机地址
+	 * @param url
+	 *            上传文件接口
+	 * @param groupId
+	 *            文件所属组
+	 * @param srcPathFile
+	 *            待上传文件所在的路径(带文件名的全路径)
+	 * @param fileName
+	 *            文件名
+	 * @return
+	 * @throws Exception
+	 */
 	public static String fileUpload(String slowdfsHost, String url, String groupId, String srcPathFile, String fileName)
 			throws Exception {
 		return fileUpload(slowdfsHost, url, groupId, srcPathFile, fileName, 5 * 1000, 5 * 1000);
 	}
 
-	public static String fileUploadSimple(String slowdfsHost, String groupId, String srcPathFile, String fileName)
+	/**
+	 * 
+	 * @param slowdfsHost
+	 *            slowdfs主机地址
+	 * @param groupId
+	 *            文件所属组
+	 * @param srcPathFile
+	 *            待上传文件所在的路径(带文件名的全路径)
+	 * @param fileName
+	 *            文件名
+	 * @return
+	 * @throws Exception
+	 */
+	public static String fileUpload(String slowdfsHost, String groupId, String srcPathFile, String fileName)
 			throws Exception {
 		return fileUpload(slowdfsHost, "/slowdfs/upload", groupId, srcPathFile, fileName);
+	}
+
+	/**
+	 * 随机选择一个集群节点上传文件
+	 * 
+	 * @param hosts
+	 *            slowdfs集群各节点
+	 * @param groupId
+	 *            文件所属组
+	 * @param srcPathFile
+	 *            待上传文件所在的路径(带文件名的全路径)
+	 * @param fileName
+	 *            文件名
+	 * @return 文件上传信息
+	 * @throws Exception
+	 */
+	public static Map<String, Object> fileUploadToHosts(String[] hosts, String groupId, String srcPathFile,
+			String fileName) throws Exception {
+		Exception exception = new Exception("failed");
+
+		hosts = MyUtil.randomizeArray(hosts);
+		for (String host : hosts) {
+			try {
+				String jsonResult = fileUpload(host, groupId, srcPathFile, fileName);
+				Map<String, Object> map = MyUtil.getMapByJsonStr(jsonResult);
+				String result = (String) map.get("result");
+				if ("succ".equals(result)) {
+					@SuppressWarnings("unchecked")
+					ArrayList<Map<String, Object>> list = (ArrayList<Map<String, Object>>) map.get("uploadfiles");
+					Map<String, Object> mapFileInfo = list.get(0);
+					boolean uploadStatus = (boolean) mapFileInfo.get("uploadStatus");
+					if (uploadStatus) {
+						return mapFileInfo;
+					} else {
+						throw new Exception((String) mapFileInfo.get("msg"));
+					}
+				}
+			} catch (Exception e) {
+				exception = e;
+			}
+		}
+		throw exception;
 	}
 
 	/**
@@ -94,26 +168,24 @@ public class ClientUtil {
 	 * 
 	 * @param slowdfsHost
 	 *            eg. http://127.0.0.1:8080
-	 * @param url
-	 *            eg. /slowdfs/download
-	 * @param groupId
-	 *            文件所属组
-	 * @param fileId
-	 *            文件ID
+	 * @param webContextPath
+	 *            slowdfs的context path
+	 * @param downloadUrl
+	 *            文件下载url
 	 * @param pathFile
-	 *            放置下载文件的目标路径
+	 *            放置下载文件的目标路径(带文件名的全路径)
 	 * @param iConnectTimeout
 	 * @param iSocketTimeout
 	 * @throws Exception
 	 */
-	public static String fileDownload(String slowdfsHost, String url, String groupId, String fileId, String pathFile,
+	public static String fileDownload(String slowdfsHost, String webContextPath, String downloadUrl, String pathFile,
 			int iConnectTimeout, int iSocketTimeout) throws Exception {
-		String hostUrl = slowdfsHost + url + "/" + groupId + "/" + fileId;
+		String url = slowdfsHost + webContextPath + downloadUrl;
 
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		CloseableHttpResponse response = null;
 		try {
-			HttpGet httpGet = new HttpGet(hostUrl); // 使用Get方法提交
+			HttpGet httpGet = new HttpGet(url); // 使用Get方法提交
 			RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(iConnectTimeout)
 					.setSocketTimeout(iSocketTimeout).setConnectionRequestTimeout(1000).build();
 			httpGet.setConfig(requestConfig);
@@ -148,24 +220,60 @@ public class ClientUtil {
 		}
 	}
 
-	public static String fileDownload(String slowdfsHost, String url, String groupId, String fileId, String pathFile)
-			throws Exception {
-		return fileDownload(slowdfsHost, url, groupId, fileId, pathFile, 5 * 1000, 5 * 1000);
+	/**
+	 * 
+	 * @param slowdfsHost
+	 *            eg. http://127.0.0.1:8080
+	 * @param downloadUrl
+	 *            文件下载url
+	 * @param pathFile
+	 *            放置下载文件的目标路径(带文件名的全路径)
+	 * @return
+	 * @throws Exception
+	 */
+	public static String fileDownload(String slowdfsHost, String downloadUrl, String pathFile) throws Exception {
+		return fileDownload(slowdfsHost, "/slowdfs", downloadUrl, pathFile, 5 * 1000, 5 * 1000);
 	}
 
-	public static String fileDownloadSimple(String slowdfsHost, String groupId, String fileId, String pathFile)
-			throws Exception {
-		return fileDownload(slowdfsHost, "/slowdfs/download", groupId, fileId, pathFile);
+	/**
+	 * 随机选择一个集群节点下载文件
+	 * 
+	 * @param hosts
+	 *            slowdfs集群各节点
+	 * @param downloadUrl
+	 *            文件下载url
+	 * @param pathFile
+	 *            放置下载文件的目标路径(带文件名的全路径)
+	 * @throws Exception
+	 */
+	public static void fileDownloadFromHosts(String[] hosts, String downloadUrl, String pathFile) throws Exception {
+		Exception exception = new Exception("failed");
+
+		hosts = MyUtil.randomizeArray(hosts);
+		for (String host : hosts) {
+			try {
+				String jsonResult = fileDownload(host, downloadUrl, pathFile);
+				Map<String, String> map = MyUtil.getMapByJsonStr(jsonResult);
+				String result = map.get("result");
+				if ("succ".equals(result)) {
+					return;
+				} else {
+					throw new Exception((String) map.get("msg"));
+				}
+			} catch (Exception e) {
+				exception = e;
+			}
+		}
+		throw exception;
 	}
 
 	public static void main(String[] args) throws Exception {
-//		String result = fileUploadSimple("http://127.0.0.1:8080", "pub.lic", "E:\\book\\Java性能权威指南 (图灵程序设计丛书).epub",
-//				"Java性能权威指南 (图灵程序设计丛书).epub");
-//		System.out.println(result);
+		String[] hosts = new String[] { "http://127.0.0.1:8080", "http://127.0.0.1:18080" };
+		Map<String, Object> map = fileUploadToHosts(hosts, "public", "E:\\tmp/summer.zip", "summer.zip");
+		System.out.println(map);
 
-		 String result = ClientUtil.fileDownload("http://127.0.0.1:8080",
-		 "/slowdfs/download", "default",
-		 "44ecc1a0a205bf7dde7961c6c8e53178.log", "e:/tmp/Java程序性能优化.pdf", 3000, 1000);
-		 System.out.println(result);
+		ClientUtil.fileDownloadFromHosts(hosts, "/download/public/96b12b3f5a545865ee7a4e338d494924.zip",
+				"e:/tmp/abc.zip");
+
 	}
 }

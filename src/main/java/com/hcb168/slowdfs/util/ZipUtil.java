@@ -11,7 +11,7 @@ import net.lingala.zip4j.util.Zip4jConstants;
 
 /**
  * 
- * @author yanglih
+ * @author atomat
  *
  */
 public class ZipUtil {

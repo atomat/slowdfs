@@ -23,7 +23,7 @@ public class GetNotice {
 			return MyUtil.getReturnErr("文件信息不能为空");
 		}
 		String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo));
-		MyUtil.getLogger().debug("addFile收到：" + jsonFileInfo);
+		MyUtil.getLogger().debug("收到addFile消息：" + jsonFileInfo);
 
 		ResultOfFileUpload fileInfo;
 		try {
@@ -45,7 +45,28 @@ public class GetNotice {
 			}
 		} else {
 			// 本机已存在，忽略
+			MyUtil.getLogger().debug("本机已存在，忽略");
 		}
+		return MyUtil.getReturnSucc("recieved");
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/notify/deletefile/{base64FileInfo}", method = { RequestMethod.GET,
+			RequestMethod.POST }, produces = "text/html;charset=UTF-8")
+	public String deleteFile(@PathVariable("base64FileInfo") String base64FileInfo) throws Exception {
+		if (StringUtils.isEmpty(base64FileInfo)) {
+			return MyUtil.getReturnErr("文件信息不能为空");
+		}
+		String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo));
+		MyUtil.getLogger().debug("收到deleteFile消息：" + jsonFileInfo);
+
+		try {
+			JdbcHelper.putNoticeDelete(jsonFileInfo);
+		} catch (Exception e) {
+			MyUtil.getLogger().error("putNoticeDelete 失败：" + jsonFileInfo + "," + e);
+			return MyUtil.getReturnErr("putNoticeDelete失败：" + e);
+		}
+
 		return MyUtil.getReturnSucc("recieved");
 	}
 }

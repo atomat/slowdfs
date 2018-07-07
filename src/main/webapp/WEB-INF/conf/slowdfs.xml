@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SlowDFSConfig>
+	<!-- 上传数据的最大值 -->
 	<maxUploadSize>8000000000</maxUploadSize>
+	<!-- 上传单个文件大小的最大值 -->
 	<maxFileSize>2000000000</maxFileSize>
-	<noticeHostUrl>/slowdfs/notify</noticeHostUrl>
-	<downloadUrl>/slowdfs/download</downloadUrl>
+	<!-- 基于安全考虑：禁止上传jsp文件 -->
+	<unallowedPrefix>.JSP</unallowedPrefix>
 </SlowDFSConfig>

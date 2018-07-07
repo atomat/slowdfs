@@ -6,18 +6,18 @@ import java.util.Map;
 import com.hcb168.slowdfs.db.JdbcHelper;
 import com.hcb168.slowdfs.util.MyUtil;
 
-public class FileWorker extends Thread {
+public class FileWorkerReserve extends Thread {
 	@Override
 	public void run() {
-		MyUtil.getLogger().info("FileWorker线程启动");
+		MyUtil.getLogger().info("FileWorkerReserve线程启动");
 		while (true) {
 			try {
-				sleep(500);
+				sleep(10 * 60 * 1000);
 			} catch (InterruptedException e) {
 				MyUtil.getLogger().error(e);
 			}
 			try {
-				List<Map<String, Object>> listNotice = JdbcHelper.getNotice();
+				List<Map<String, Object>> listNotice = JdbcHelper.getNoticeReserve();
 				for (Map<String, Object> map : listNotice) {
 					String seqId = (String) map.get("seqid");
 					String operType = (String) map.get("oper_type");
@@ -26,18 +26,17 @@ public class FileWorker extends Thread {
 
 					boolean result = FileWorkerOperate.doThis(seqId, operType, jsonFileInfo);
 					if (result == true) {
-						JdbcHelper.delNotice(seqId);
+						JdbcHelper.delNoticeReserve(seqId);
 					} else {
-						if (errNum < 3) {
-							JdbcHelper.increaseNoticeErrNum(seqId);
+						if (errNum < 8) {
+							JdbcHelper.increaseNoticeReserveErrNum(seqId);
 						} else {
-							JdbcHelper.moveNoticeToReserve(seqId);
+							JdbcHelper.delNoticeReserve(seqId);
 						}
 					}
-
 				}
 			} catch (Exception e) {
-				MyUtil.getLogger().error("FileWorker:" + e);
+				MyUtil.getLogger().error("FileWorkerReserve:" + e);
 			}
 		}
 	}
