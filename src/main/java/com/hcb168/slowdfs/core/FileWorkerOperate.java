@@ -52,7 +52,7 @@ public class FileWorkerOperate {
 	private static boolean deleteFile(ResultOfFileUpload fileInfo) throws Exception {
 		// 判断本机是否已存在
 		ResultOfFileUpload resultOfFileUpload = SlowFile.getInstance().getResultOfFileUpload(fileInfo.getFileId());
-		if (resultOfFileUpload != null) {
+		if (resultOfFileUpload != null && resultOfFileUpload.getGroupId().equals(fileInfo.getGroupId())) {
 			// 本机已存在该文件
 			// 删除该文件信息
 			SlowFile.getInstance().removeResultOfFileUpload(fileInfo.getFileId());
@@ -96,7 +96,7 @@ public class FileWorkerOperate {
 			if (!StringUtils.isEmpty(prefix)) {
 				fileName = fileName + "." + prefix;
 			}
-			String downloadUrl = "/syncfile" + groupId + "/" + fileName;
+			String downloadUrl = "/syncfile/" + groupId + "/" + fileName;
 
 			String fileUUIDname = UUID.randomUUID().toString();
 			String pathFile = MyFileUtil

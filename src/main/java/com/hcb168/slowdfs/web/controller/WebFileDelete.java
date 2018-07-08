@@ -23,6 +23,7 @@ public class WebFileDelete {
 			RequestMethod.POST }, produces = "text/html;charset=UTF-8")
 	public String deleteFile(@PathVariable("groupId") String groupId, @PathVariable("fileId") String fileId)
 			throws Exception {
+		// 删除文件API必输同时输入正确的groupId和fileId，防止误删或恶意删除
 		MyUtil.getLogger().debug("删除文件：" + groupId + "/" + fileId);
 
 		if (StringUtils.isEmpty(fileId)) {
@@ -35,10 +36,12 @@ public class WebFileDelete {
 		ResultOfFileUpload resultOfFileUpload = SlowFile.getInstance().getResultOfFileUpload(fileId);
 		if (resultOfFileUpload == null) {
 			// 本机不存在该文件
+			Notice.deleteFile(groupId, fileId);
 			return MyUtil.getReturnSucc("文件已删除");
 		}
 
 		if (!groupId.equals(resultOfFileUpload.getGroupId())) {
+			Notice.deleteFile(groupId, fileId);
 			return MyUtil.getReturnSucc("文件已删除");
 		}
 
@@ -52,7 +55,7 @@ public class WebFileDelete {
 			new File(strPathFile).delete();
 		}
 
-		Notice.deleteFile(resultOfFileUpload);
+		Notice.deleteFile(groupId, fileId);
 
 		return MyUtil.getReturnSucc("成功删除文件");
 	}

@@ -21,6 +21,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.CharsetUtils;
 import org.apache.http.util.EntityUtils;
 
+import com.hcb168.slowdfs.util.HttpUtil;
 import com.hcb168.slowdfs.util.MyUtil;
 
 public class ClientUtil {
@@ -267,13 +268,59 @@ public class ClientUtil {
 		throw exception;
 	}
 
+	/**
+	 * 删除指定文件，slowdfs集群会自动同步删除操作
+	 * 
+	 * @param slowdfsHost
+	 *            slowdfs服务器地址
+	 * @param webContextPath
+	 *            slowdfs的context path
+	 * @param groupId
+	 *            文件所属组
+	 * @param fileId
+	 *            文件ID
+	 * @throws Exception
+	 */
+	public static void deleteFile(String slowdfsHost, String webContextPath, String groupId, String fileId)
+			throws Exception {
+		String url = slowdfsHost + webContextPath + "/deletefile/" + groupId + "/" + fileId;
+		try {
+			String jsonResult = HttpUtil.GetQuickly(url);
+			Map<String, String> map = MyUtil.getMapByJsonStr(jsonResult);
+			String result = map.get("result");
+			if ("succ".equals(result)) {
+				return;
+			} else {
+				throw new Exception((String) map.get("msg"));
+			}
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	/**
+	 * 删除指定文件，slowdfs集群会自动同步删除操作
+	 * 
+	 * @param slowdfsHost
+	 *            slowdfs服务器地址
+	 * @param groupId
+	 *            文件所属组
+	 * @param fileId
+	 *            文件ID
+	 * @throws Exception
+	 */
+	public static void deleteFile(String slowdfsHost, String groupId, String fileId) throws Exception {
+		deleteFile(slowdfsHost, "/slowdfs", groupId, fileId);
+	}
+
 	public static void main(String[] args) throws Exception {
 		String[] hosts = new String[] { "http://127.0.0.1:8080", "http://127.0.0.1:18080" };
 		Map<String, Object> map = fileUploadToHosts(hosts, "public", "E:\\tmp/summer.zip", "summer.zip");
 		System.out.println(map);
 
-		ClientUtil.fileDownloadFromHosts(hosts, "/download/public/96b12b3f5a545865ee7a4e338d494924.zip",
+		ClientUtil.fileDownloadFromHosts(hosts, "/download/public/96b12b3f5a545865ee7a4e338d494914.zip",
 				"e:/tmp/abc.zip");
 
+		deleteFile(hosts[1], "/slowdfs", "public", "96b12b3f5a545865ee7a4e338d494914");
 	}
 }

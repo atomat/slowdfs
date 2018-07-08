@@ -51,13 +51,28 @@ public class GetNotice {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/notify/deletefile/{base64FileInfo}", method = { RequestMethod.GET,
+	@RequestMapping(value = "/notify/deletefile/{groupId:.+}/{fileId}", method = { RequestMethod.GET,
 			RequestMethod.POST }, produces = "text/html;charset=UTF-8")
-	public String deleteFile(@PathVariable("base64FileInfo") String base64FileInfo) throws Exception {
-		if (StringUtils.isEmpty(base64FileInfo)) {
-			return MyUtil.getReturnErr("文件信息不能为空");
+	public String deleteFile(@PathVariable("groupId") String groupId, @PathVariable("fileId") String fileId)
+			throws Exception {
+		if (StringUtils.isEmpty(fileId)) {
+			return MyUtil.getReturnErr("文件ID不能为空");
 		}
-		String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo));
+		if (StringUtils.isEmpty(groupId)) {
+			return MyUtil.getReturnErr("groupid不能为空");
+		}
+		ResultOfFileUpload fileInfo = SlowFile.getInstance().getResultOfFileUpload(fileId);
+		if (fileInfo == null) {
+			fileInfo = new ResultOfFileUpload();
+			fileInfo.setFileId(fileId);
+			fileInfo.setGroupId(groupId);
+		}
+		if (!groupId.equals(fileInfo.getGroupId())) {
+			fileInfo = new ResultOfFileUpload();
+			fileInfo.setFileId(fileId);
+			fileInfo.setGroupId(groupId);
+		}
+		String jsonFileInfo = MyUtil.getJsonString(fileInfo);
 		MyUtil.getLogger().debug("收到deleteFile消息：" + jsonFileInfo);
 
 		try {

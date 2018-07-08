@@ -2,26 +2,25 @@ package com.hcb168.slowdfs.core;
 
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
-
 import com.hcb168.slowdfs.config.ConfigHandle;
 import com.hcb168.slowdfs.util.HttpUtil;
 import com.hcb168.slowdfs.util.MyUtil;
 import com.hcb168.slowdfs.util.SysParams;
 
 public class NoticeDeleteFileTask implements Runnable {
-	private ResultOfFileUpload resultOfFileUpload;
+	private String groupId;
+	private String fileId;
 
-	public NoticeDeleteFileTask(ResultOfFileUpload resultOfFileUpload) {
-		this.resultOfFileUpload = resultOfFileUpload;
+	public NoticeDeleteFileTask(String groupId, String fileId) {
+		this.groupId = groupId;
+		this.fileId = fileId;
 	}
 
 	@Override
 	public void run() {
 		try {
 			String noticeHostUrl = SysParams.getInstance().getSysParam("web.context.path") + "/notify";
-			String url = noticeHostUrl + "/deletefile/"
-					+ Base64.encodeBase64URLSafeString(MyUtil.getJsonString(resultOfFileUpload).getBytes());
+			String url = noticeHostUrl + "/deletefile/" + this.groupId + "/" + this.fileId;
 			String[] hostList = ConfigHandle.getInstance().getActiveHosts();
 			hostList = MyUtil.randomizeArray(hostList);
 			for (String host : hostList) {
@@ -33,8 +32,7 @@ public class NoticeDeleteFileTask implements Runnable {
 					Map<String, String> map = MyUtil.getMapByJsonStr(jsonResult);
 					String result = map.get("result");
 					if ("succ".equals(result)) {
-						MyUtil.getLogger().info("通知" + host + "成功，" + resultOfFileUpload.getFileId() + "|"
-								+ resultOfFileUpload.getOriginalFileName());
+						MyUtil.getLogger().info("通知" + host + "成功，" + this.fileId);
 						continue;
 					} else {
 						String msg = map.get("msg");

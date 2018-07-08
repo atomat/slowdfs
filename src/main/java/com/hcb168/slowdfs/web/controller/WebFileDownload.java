@@ -98,7 +98,8 @@ public class WebFileDownload {
 
 		File file = new File(strPathFile);
 		if (!file.exists()) {
-			throw new Exception("该文件ID指向的文件不存在：" + resultOfFileUpload.getFileId());
+			SlowFile.getInstance().removeResultOfFileUpload(resultOfFileUpload.getFileId());
+			throw new Exception("该文件ID指向的文件不存在：" + resultOfFileUpload.getFileId() + "，请稍后重试");
 		}
 
 		HttpHeaders headers = new HttpHeaders();

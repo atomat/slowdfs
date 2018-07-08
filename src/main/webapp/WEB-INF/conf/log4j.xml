@@ -39,7 +39,7 @@
 	</appender>
 
 	<logger name="LOGFILE" additivity="false">
-		<level value="INFO" />
+		<level value="DEBUG" />
 		<appender-ref ref="ASYNC" />
 	</logger>
 

@@ -24,8 +24,8 @@ public class Notice {
 	 * 
 	 * @param resultOfFileUpload
 	 */
-	public static void deleteFile(ResultOfFileUpload resultOfFileUpload) {
-		NoticeDeleteFileTask noticeDeleteFileTask = new NoticeDeleteFileTask(resultOfFileUpload);
+	public static void deleteFile(String groupId, String fileId) {
+		NoticeDeleteFileTask noticeDeleteFileTask = new NoticeDeleteFileTask(groupId, fileId);
 		noticeThreadPool.execute(noticeDeleteFileTask);
 	}
 }

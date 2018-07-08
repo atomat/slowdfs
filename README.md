@@ -24,3 +24,32 @@
 2. 将target目录下slowdfs目录复制到Tomcat的webapps目录下；
 3. 修改slowdfshost.xml文件，设置slowdfs的所有节点。
 
+## api说明
+* 文件上传接口：/upload/文件所属组；支持的方法：POST。说明：上传单个、多个文件到指定文件组下。    
+接口返回内容：
+```
+{
+	"result": "succ",  // 文件上传请求的成功失败标志。succ-成功，err-失败
+	"uploadfiles": [{  // 文件上传结果，数组形式，支持上传多个文件
+		"groupId": "default",  // 文件所属组
+		"originalFileName": "testa.zip",  // 原始文件名
+		"prefix": "zip",  // 文件名后缀
+		"fileSize": 1001014,  // 文件大小
+		"fileMD5Value": "65b58ce5a3803e69f3d548c86d65bf35",  // 文件内容的MD5值
+		"fileId": "a05b46178c89e988d902de9f7312fc20",  // 文件ID（全局唯一）
+		"fileName": "a05b46178c89e988d902de9f7312fc20.zip", // 在服务器端的文件名
+		"downloadUrl": "/download/default/a05b46178c89e988d902de9f7312fc20.zip",  // 文件下载URL
+		"storePathFile": "/6/b5/65b58ce5a3803e69f3d548c86d65bf35.zip",  // 文件在服务器端的存储路径
+		"dateTime": "20180707 23:58:13.445 +0800",  // 文件上传时间
+		"uploadStatus": true,  // 文件上传结果，boolean类型。true-上传成功，false-上传失败
+		"msg": ""  // 当文件上传失败时，msg中存放的是失败原因
+	}]
+}
+```
+* 文件上传接口：/upload；支持的方法：POST。说明：上传单个、多个文件到default文件组下。
+* 文件下载接口：/download/文件所属组/文件名称；支持的方法：GET、POST。说明：下载指定文件组下的文件。    
+正常情况下返回文件流。报错时返回值为：{"result":"err","msg":"错误原因"}。
+* 文件下载接口：/download/文件名称；支持的方法：GET、POST。说明：下载default文件组下的文件。
+* 文件删除接口：/deletefile/文件所属组/文件ID；支持的方法：GET、POST。说明：删除指定文件组下的文件。    
+删除成功时返回：{"result":"succ","msg":"……"}，报错时返回：{"result":"err","msg":"错误信息"}
+
