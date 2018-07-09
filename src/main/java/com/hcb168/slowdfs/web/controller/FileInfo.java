@@ -45,7 +45,7 @@ public class FileInfo {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		resultMap.put("result", "succ");
 		resultMap.put("fileInfo",
-				Base64.encodeBase64URLSafeString(MyUtil.getJsonString(resultOfFileUpload).getBytes()));
+				Base64.encodeBase64URLSafeString(MyUtil.getJsonString(resultOfFileUpload).getBytes("UTF-8")));
 		return MyUtil.getJsonString(resultMap);
 	}
 }

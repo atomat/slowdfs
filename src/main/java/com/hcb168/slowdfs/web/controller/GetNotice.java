@@ -1,5 +1,7 @@
 package com.hcb168.slowdfs.web.controller;
 
+import java.nio.charset.Charset;
+
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -22,7 +24,7 @@ public class GetNotice {
 		if (StringUtils.isEmpty(base64FileInfo)) {
 			return MyUtil.getReturnErr("文件信息不能为空");
 		}
-		String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo));
+		String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo), Charset.forName("UTF-8"));
 		MyUtil.getLogger().debug("收到addFile消息：" + jsonFileInfo);
 
 		ResultOfFileUpload fileInfo;

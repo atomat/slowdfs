@@ -17,6 +17,7 @@ public class SlowFile {
 		return instance;
 	}
 
+	@SuppressWarnings("unused")
 	private final Map<String, ResultOfFileUpload> map = new ConcurrentHashMap<String, ResultOfFileUpload>();
 
 	public void putResultOfFileUpload(ResultOfFileUpload resultOfFileUpload) throws Exception {

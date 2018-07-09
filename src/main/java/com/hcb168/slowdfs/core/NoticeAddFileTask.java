@@ -21,7 +21,7 @@ public class NoticeAddFileTask implements Runnable {
 		try {
 			String noticeHostUrl = SysParams.getInstance().getSysParam("web.context.path") + "/notify";
 			String url = noticeHostUrl + "/addfile/"
-					+ Base64.encodeBase64URLSafeString(MyUtil.getJsonString(resultOfFileUpload).getBytes());
+					+ Base64.encodeBase64URLSafeString(MyUtil.getJsonString(resultOfFileUpload).getBytes("UTF-8"));
 			String[] hostList = ConfigHandle.getInstance().getActiveHosts();
 			hostList = MyUtil.randomizeArray(hostList);
 			for (String host : hostList) {
