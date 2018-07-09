@@ -30,7 +30,9 @@ public class ClientUtil {
 	 * 
 	 * @param slowdfsHost
 	 *            eg. http://127.0.0.1:8080
-	 * @param url
+	 * @param webContextPath
+	 *            slowdfs的context path
+	 * @param uploadUrl
 	 *            eg. /slowdfs/upload
 	 * @param groupId
 	 *            文件所属组
@@ -43,9 +45,9 @@ public class ClientUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String fileUpload(String slowdfsHost, String url, String groupId, String srcPathFile, String fileName,
-			int iConnectTimeout, int iSocketTimeout) throws Exception {
-		String hostUrl = slowdfsHost + url + "/" + groupId;
+	public static String fileUpload(String slowdfsHost, String webContextPath, String uploadUrl, String groupId,
+			String srcPathFile, String fileName, int iConnectTimeout, int iSocketTimeout) throws Exception {
+		String hostUrl = slowdfsHost + webContextPath + uploadUrl + "/" + groupId;
 		File file = new File(srcPathFile);
 		if (!file.exists()) {
 			throw new Exception("文件不存在：" + srcPathFile);
@@ -88,7 +90,7 @@ public class ClientUtil {
 	 * 
 	 * @param slowdfsHost
 	 *            slowdfs主机地址
-	 * @param url
+	 * @param uploadUrl
 	 *            上传文件接口
 	 * @param groupId
 	 *            文件所属组
@@ -99,9 +101,9 @@ public class ClientUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String fileUpload(String slowdfsHost, String url, String groupId, String srcPathFile, String fileName)
-			throws Exception {
-		return fileUpload(slowdfsHost, url, groupId, srcPathFile, fileName, 5 * 1000, 5 * 1000);
+	public static String fileUpload(String slowdfsHost, String uploadUrl, String groupId, String srcPathFile,
+			String fileName) throws Exception {
+		return fileUpload(slowdfsHost, "/slowdfs", uploadUrl, groupId, srcPathFile, fileName, 5 * 1000, 5 * 1000);
 	}
 
 	/**
@@ -119,7 +121,7 @@ public class ClientUtil {
 	 */
 	public static String fileUpload(String slowdfsHost, String groupId, String srcPathFile, String fileName)
 			throws Exception {
-		return fileUpload(slowdfsHost, "/slowdfs/upload", groupId, srcPathFile, fileName);
+		return fileUpload(slowdfsHost, "/upload", groupId, srcPathFile, fileName);
 	}
 
 	/**
