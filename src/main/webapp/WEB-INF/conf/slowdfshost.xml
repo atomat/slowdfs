@@ -3,6 +3,6 @@
 	<!-- 文件服务的各个节点 例子<string>http://127.0.0.1:8080</string> <string>http://127.0.0.1:18080</string> -->
 	<hostList>
 		<string>http://127.0.0.1:8080</string>
-		<string>http://127.0.0.1:18080</string>
+		<string>http://192.168.251.101:8080</string>
 	</hostList>
 </HostConfig>

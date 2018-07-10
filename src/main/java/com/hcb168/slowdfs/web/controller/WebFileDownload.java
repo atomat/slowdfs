@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -182,7 +183,7 @@ public class WebFileDownload {
 				String result = map.get("result");
 				if ("succ".equals(result)) {
 					String base64FileInfo = map.get("fileInfo");
-					String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo));
+					String jsonFileInfo = new String(Base64.decodeBase64(base64FileInfo), Charset.forName("UTF-8"));
 					ResultOfFileUpload fileInfo = (ResultOfFileUpload) MyUtil.getObjectByJson(jsonFileInfo,
 							ResultOfFileUpload.class);
 
