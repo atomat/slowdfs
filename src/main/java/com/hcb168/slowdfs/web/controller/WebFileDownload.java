@@ -1,14 +1,19 @@
 package com.hcb168.slowdfs.web.controller;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FileUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +32,8 @@ import com.hcb168.slowdfs.util.SysParams;
 @Controller
 public class WebFileDownload {
 	@RequestMapping(value = "/download/{groupId:.+}/{fileName:.+}", method = { RequestMethod.GET, RequestMethod.POST })
-	public ResponseEntity<byte[]> download(@PathVariable("groupId") String groupId,
-			@PathVariable("fileName") String fileName) throws Exception {
+	public void download(HttpServletRequest request, HttpServletResponse response,
+			@PathVariable("groupId") String groupId, @PathVariable("fileName") String fileName) throws Exception {
 		MyUtil.getLogger().debug("下载：" + groupId + "/" + fileName);
 
 		if (StringUtils.isEmpty(fileName)) {
@@ -51,17 +56,27 @@ public class WebFileDownload {
 			throw new Exception("该组" + groupId + "下不存在该文件：" + fileName);
 		}
 
-		return getFileEntity(resultOfFileUpload);
+		getFileEntity(request, response, resultOfFileUpload);
 	}
 
 	@RequestMapping(value = "/download/{fileName:.+}", method = { RequestMethod.GET, RequestMethod.POST })
-	public ResponseEntity<byte[]> download(@PathVariable("fileName") String fileName) throws Exception {
-		return download("default", fileName);
+	public void download(HttpServletRequest request, HttpServletResponse response,
+			@PathVariable("fileName") String fileName) throws Exception {
+		download(request, response, "default", fileName);
 	}
 
+	/**
+	 * 各节点间同步文件专用接口，避免使用download接口形成循环调用
+	 * 
+	 * @param request
+	 * @param response
+	 * @param groupId
+	 * @param fileName
+	 * @throws Exception
+	 */
 	@RequestMapping(value = "/syncfile/{groupId:.+}/{fileName:.+}", method = { RequestMethod.GET, RequestMethod.POST })
-	public ResponseEntity<byte[]> syncfile(@PathVariable("groupId") String groupId,
-			@PathVariable("fileName") String fileName) throws Exception {
+	public void syncfile(HttpServletRequest request, HttpServletResponse response,
+			@PathVariable("groupId") String groupId, @PathVariable("fileName") String fileName) throws Exception {
 		MyUtil.getLogger().debug("同步：" + groupId + "/" + fileName);
 
 		if (StringUtils.isEmpty(fileName)) {
@@ -82,36 +97,66 @@ public class WebFileDownload {
 			throw new Exception("该组" + groupId + "下不存在该文件：" + fileName);
 		}
 
-		return getFileEntity(resultOfFileUpload);
+		getFileEntity(request, response, resultOfFileUpload);
 	}
 
 	/**
-	 * 根据文件信息返回ResponseEntity
+	 * 根据文件信息输出文件流
 	 * 
+	 * @param request
+	 * @param response
 	 * @param resultOfFileUpload
-	 * @return
 	 * @throws Exception
 	 */
-	private ResponseEntity<byte[]> getFileEntity(ResultOfFileUpload resultOfFileUpload) throws Exception {
+	private void getFileEntity(HttpServletRequest request, HttpServletResponse response,
+			ResultOfFileUpload resultOfFileUpload) throws Exception {
 		String strPathFile = MyFileUtil.formatPath(
 				SysParams.getInstance().getSysParam("file.store.path") + resultOfFileUpload.getStorePathFile());
-
 		File file = new File(strPathFile);
 		if (!file.exists()) {
 			SlowFile.getInstance().removeResultOfFileUpload(resultOfFileUpload.getFileId());
 			throw new Exception("该文件ID指向的文件不存在：" + resultOfFileUpload.getFileId() + "，请稍后重试");
 		}
 
-		HttpHeaders headers = new HttpHeaders();
-		// 下载显示的文件名，解决中文名称乱码问题
-		String downloadFielName = new String((resultOfFileUpload.getOriginalFileName()).getBytes("UTF-8"),
-				"iso-8859-1");
+		// 下载显示的文件名，根据不同浏览器解决中文名称乱码问题
+		String userAgent = request.getHeader("user-agent").toLowerCase();
+		String downloadFielName = resultOfFileUpload.getOriginalFileName();
+		if (userAgent.contains("msie") || userAgent.contains("like gecko")) {
+			// win10 IE edge 浏览器 和其他系统的IE
+			downloadFielName = URLEncoder.encode(downloadFielName, "UTF-8");
+		} else {
+			// 其它
+			downloadFielName = new String(downloadFielName.getBytes("UTF-8"), "iso-8859-1");
+		}
 
-		// 通知浏览器以attachment（下载方式）打开
-		headers.setContentDispositionFormData("attachment", downloadFielName);
-		// application/octet-stream ： 二进制流数据（最常见的文件下载）。
-		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		return new ResponseEntity<byte[]>(FileUtils.readFileToByteArray(file), headers, HttpStatus.CREATED);
+		InputStream fis = null;
+		OutputStream out = null;
+
+		try {
+			fis = new BufferedInputStream(new FileInputStream(file));
+
+			response.reset();
+			// application/octet-stream ： 二进制流数据（最常见的文件下载）。
+			response.setContentType("application/octet-stream");
+			// 通知浏览器以attachment（下载方式）打开
+			response.addHeader("Content-Disposition", "attachment;filename=\"" + downloadFielName + "\"");
+			response.addHeader("Content-Length", "" + file.length());
+			response.setStatus(200);
+
+			out = new BufferedOutputStream(response.getOutputStream());
+			byte[] buffer = new byte[128 * 1024];
+			int i = -1;
+			while ((i = fis.read(buffer)) != -1) {
+				out.write(buffer, 0, i);
+			}
+			out.flush();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			IOUtils.closeQuietly(out);
+			IOUtils.closeQuietly(fis);
+		}
+
 	}
 
 	/**
@@ -145,7 +190,7 @@ public class WebFileDownload {
 					continue;
 				} else {
 					String msg = map.get("msg");
-					MyUtil.getLogger().error("访问失败：" + hostUrl + "," + msg);
+					MyUtil.getLogger().warn("访问失败：" + hostUrl + "," + msg);
 				}
 			} catch (Exception e) {
 				MyUtil.getLogger().error("访问失败：" + hostUrl + "," + e);

@@ -140,7 +140,7 @@ public class WebFileUpload {
 					md5FileName = fileMD5Value + "." + prefix;
 				}
 
-				String fileId = DigestUtils.md5Hex(fileMD5Value + "@" + groupId);
+				String fileId = DigestUtils.md5Hex(fileMD5Value + "@" + groupId + "#" + originalFileName);
 
 				// 检查本机是否存在
 				ResultOfFileUpload resultOfFileUpload = SlowFile.getInstance().getResultOfFileUpload(fileId);
