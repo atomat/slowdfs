@@ -155,6 +155,8 @@ public class WebFileDownload {
 		} finally {
 			IOUtils.closeQuietly(out);
 			IOUtils.closeQuietly(fis);
+			out = null;
+			fis = null;
 		}
 
 	}

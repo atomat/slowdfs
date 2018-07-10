@@ -44,6 +44,8 @@ public class HttpUtil {
 		} finally {
 			HttpClientUtils.closeQuietly(response);
 			HttpClientUtils.closeQuietly(httpClient);
+			response = null;
+			httpClient = null;
 		}
 	}
 }

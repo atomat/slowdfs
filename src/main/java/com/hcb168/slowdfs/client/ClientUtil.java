@@ -82,6 +82,8 @@ public class ClientUtil {
 		} finally {
 			HttpClientUtils.closeQuietly(response);
 			HttpClientUtils.closeQuietly(httpClient);
+			response = null;
+			httpClient = null;
 		}
 		return result;
 	}
@@ -220,6 +222,8 @@ public class ClientUtil {
 		} finally {
 			HttpClientUtils.closeQuietly(response);
 			HttpClientUtils.closeQuietly(httpClient);
+			response = null;
+			httpClient = null;
 		}
 	}
 
