@@ -41,7 +41,9 @@ public class ClientUtil {
 	 * @param fileName
 	 *            文件名称
 	 * @param iConnectTimeout
+	 *            ConnectTimeout单位毫秒
 	 * @param iSocketTimeout
+	 *            SocketTimeout单位毫秒
 	 * @return
 	 * @throws Exception
 	 */
@@ -137,17 +139,22 @@ public class ClientUtil {
 	 *            待上传文件所在的路径(带文件名的全路径)
 	 * @param fileName
 	 *            文件名
+	 * @param iConnectTimeout
+	 *            ConnectTimeout单位毫秒
+	 * @param iSocketTimeout
+	 *            SocketTimeout单位毫秒
 	 * @return 文件上传信息
 	 * @throws Exception
 	 */
 	public static Map<String, Object> fileUploadToHosts(String[] hosts, String groupId, String srcPathFile,
-			String fileName) throws Exception {
+			String fileName, int iConnectTimeout, int iSocketTimeout) throws Exception {
 		Exception exception = new Exception("failed");
 
 		hosts = MyUtil.randomizeArray(hosts);
 		for (String host : hosts) {
 			try {
-				String jsonResult = fileUpload(host, groupId, srcPathFile, fileName);
+				String jsonResult = fileUpload(host, "/slowdfs", "/upload", groupId, srcPathFile, fileName,
+						iConnectTimeout, iSocketTimeout);
 				Map<String, Object> map = MyUtil.getMapByJsonStr(jsonResult);
 				String result = (String) map.get("result");
 				if ("succ".equals(result)) {
@@ -166,6 +173,25 @@ public class ClientUtil {
 			}
 		}
 		throw exception;
+	}
+
+	/**
+	 * 随机选择一个集群节点上传文件
+	 * 
+	 * @param hosts
+	 *            slowdfs集群各节点
+	 * @param groupId
+	 *            文件所属组
+	 * @param srcPathFile
+	 *            待上传文件所在的路径(带文件名的全路径)
+	 * @param fileName
+	 *            文件名
+	 * @return 文件上传信息
+	 * @throws Exception
+	 */
+	public static Map<String, Object> fileUploadToHosts(String[] hosts, String groupId, String srcPathFile,
+			String fileName) throws Exception {
+		return fileUploadToHosts(hosts, groupId, srcPathFile, fileName, 5 * 1000, 5 * 1000);
 	}
 
 	/**
@@ -251,15 +277,21 @@ public class ClientUtil {
 	 *            文件下载url
 	 * @param pathFile
 	 *            放置下载文件的目标路径(带文件名的全路径)
+	 * @param iConnectTimeout
+	 *            ConnectTimeout单位毫秒
+	 * @param iSocketTimeout
+	 *            SocketTimeout单位毫秒
 	 * @throws Exception
 	 */
-	public static void fileDownloadFromHosts(String[] hosts, String downloadUrl, String pathFile) throws Exception {
+	public static void fileDownloadFromHosts(String[] hosts, String downloadUrl, String pathFile, int iConnectTimeout,
+			int iSocketTimeout) throws Exception {
 		Exception exception = new Exception("failed");
 
 		hosts = MyUtil.randomizeArray(hosts);
 		for (String host : hosts) {
 			try {
-				String jsonResult = fileDownload(host, downloadUrl, pathFile);
+				String jsonResult = fileDownload(host, "/slowdfs", downloadUrl, pathFile, iConnectTimeout,
+						iSocketTimeout);
 				Map<String, String> map = MyUtil.getMapByJsonStr(jsonResult);
 				String result = map.get("result");
 				if ("succ".equals(result)) {
@@ -272,6 +304,21 @@ public class ClientUtil {
 			}
 		}
 		throw exception;
+	}
+
+	/**
+	 * 随机选择一个集群节点下载文件
+	 * 
+	 * @param hosts
+	 *            slowdfs集群各节点
+	 * @param downloadUrl
+	 *            文件下载url
+	 * @param pathFile
+	 *            放置下载文件的目标路径(带文件名的全路径)
+	 * @throws Exception
+	 */
+	public static void fileDownloadFromHosts(String[] hosts, String downloadUrl, String pathFile) throws Exception {
+		fileDownloadFromHosts(hosts, downloadUrl, pathFile, 5 * 1000, 5 * 1000);
 	}
 
 	/**
@@ -317,16 +364,5 @@ public class ClientUtil {
 	 */
 	public static void deleteFile(String slowdfsHost, String groupId, String fileId) throws Exception {
 		deleteFile(slowdfsHost, "/slowdfs", groupId, fileId);
-	}
-
-	public static void main(String[] args) throws Exception {
-		String[] hosts = new String[] { "http://127.0.0.1:8080", "http://127.0.0.1:18080" };
-		Map<String, Object> map = fileUploadToHosts(hosts, "public", "E:\\tmp/summer.zip", "summer.zip");
-		System.out.println(map);
-
-		ClientUtil.fileDownloadFromHosts(hosts, "/download/public/96b12b3f5a545865ee7a4e338d494914.zip",
-				"e:/tmp/abc.zip");
-
-		deleteFile(hosts[1], "/slowdfs", "public", "96b12b3f5a545865ee7a4e338d494914");
 	}
 }
