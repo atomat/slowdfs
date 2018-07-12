@@ -119,15 +119,33 @@ public class WebFileDownload {
 			throw new Exception("该文件ID指向的文件不存在：" + resultOfFileUpload.getFileId() + "，请稍后重试");
 		}
 
+		/*
+		 * edge: mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml,
+		 * like gecko) chrome/64.0.3282.140 safari/537.36 edge/17.17134
+		 * 
+		 * chrome: mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml,
+		 * like gecko) chrome/67.0.3396.99 safari/537.36
+		 * 
+		 * firefox:mozilla/5.0 (windows nt 10.0; win64; x64; rv:60.0) gecko/20100101
+		 * firefox/60.0
+		 * 
+		 * safari: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36
+		 * (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36
+		 * 
+		 * ie: mozilla/5.0 (windows nt 10.0; wow64; trident/7.0; rv:11.0) like gecko
+		 */
 		// 下载显示的文件名，根据不同浏览器解决中文名称乱码问题
 		String userAgent = request.getHeader("user-agent").toLowerCase();
 		String downloadFielName = resultOfFileUpload.getOriginalFileName();
-		if (userAgent.contains("msie") || userAgent.contains("like gecko")) {
+		if (userAgent.contains("msie") || userAgent.contains("edge")) {
 			// win10 IE edge 浏览器 和其他系统的IE
 			downloadFielName = URLEncoder.encode(downloadFielName, "UTF-8");
-		} else {
-			// 其它
+			downloadFielName = downloadFielName.replaceAll("\\+", "%20");
+		} else if (userAgent.contains("firefox") || userAgent.contains("chrome") || userAgent.contains("safari")) {
 			downloadFielName = new String(downloadFielName.getBytes("UTF-8"), "iso-8859-1");
+		} else {
+			downloadFielName = URLEncoder.encode(downloadFielName, "UTF-8");
+			downloadFielName = downloadFielName.replaceAll("\\+", "%20");
 		}
 
 		InputStream fis = null;
