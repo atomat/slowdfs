@@ -3,8 +3,11 @@ package com.hcb168.slowdfs.dao;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.dao.DuplicateKeyException;
+
 import com.hcb168.slowdfs.core.ResultOfFileUpload;
 import com.hcb168.slowdfs.db.JdbcHelper;
+import com.hcb168.slowdfs.util.MyUtil;
 
 public class SlowFile {
 	private static final SlowFile instance = new SlowFile();
@@ -21,7 +24,15 @@ public class SlowFile {
 	private final Map<String, ResultOfFileUpload> map = new ConcurrentHashMap<String, ResultOfFileUpload>();
 
 	public void putResultOfFileUpload(ResultOfFileUpload resultOfFileUpload) throws Exception {
-		JdbcHelper.putFileInfo(resultOfFileUpload);
+		try {
+			JdbcHelper.putFileInfo(resultOfFileUpload);
+		} catch (DuplicateKeyException e) {
+			MyUtil.getLogger().warn("DuplicateKeyException:" + resultOfFileUpload.getFileId() + ","
+					+ resultOfFileUpload.getGroupId() + "," + resultOfFileUpload.getOriginalFileName());
+			return;
+		} catch (Exception e) {
+			throw e;
+		}
 	}
 
 	public ResultOfFileUpload getResultOfFileUpload(String fileId) throws Exception {
