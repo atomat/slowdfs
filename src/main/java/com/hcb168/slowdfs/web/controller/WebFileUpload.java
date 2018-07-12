@@ -98,7 +98,7 @@ public class WebFileUpload {
 			if (null == pf) {
 				pf = "";
 			}
-			if (!StringUtils.isEmpty(prefix) && pf.toUpperCase().indexOf("." + prefix.toUpperCase()) >= 0) {
+			if (!StringUtils.isEmpty(prefix) && pf.toUpperCase().indexOf("." + prefix.toUpperCase() + " ") >= 0) {
 				result.setOriginalFileName(originalFileName);
 				result.setUploadStatus(false);
 				result.setMsg("不支持的文件类型：" + pf);

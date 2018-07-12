@@ -4,6 +4,6 @@
 	<maxUploadSize>8000000000</maxUploadSize>
 	<!-- 上传单个文件大小的最大值 -->
 	<maxFileSize>2000000000</maxFileSize>
-	<!-- 基于安全考虑：禁止上传jsp文件 -->
-	<unallowedPrefix>.JSP</unallowedPrefix>
+	<!-- 禁止上传的文件类型。文件类型即文件名的后缀，必须配置为小数点开头空格结尾（例：".JSP .JAVA "）。不区分大小写。 默认基于安全考虑：禁止上传jsp文件. -->
+	<unallowedPrefix>.JSP </unallowedPrefix>
 </SlowDFSConfig>
